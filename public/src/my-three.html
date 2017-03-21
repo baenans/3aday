@@ -1,0 +1,150 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../bower_components/paper-date-picker/paper-date-picker.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-a11y-keys-behavior/iron-a11y-keys-behavior.html">
+<link rel="import" href="../bower_components/app-storage/app-indexeddb-mirror/app-indexeddb-mirror.html">
+
+
+<dom-module id="my-three">
+  <template>
+    <style>
+      :host {
+        display: block;
+        text-align: center;
+      }
+
+      app-toolbar{
+        background-color: whitesmoke;
+        color: black;
+        text-align: center;
+      }
+
+      .container{
+        margin: 0 auto;
+        width: 300px;
+        margin-top: 60px;
+      }
+
+      paper-input {
+        --paper-input-container-color: #653024;
+        --paper-input-container-focus-color: #653024;
+      }
+
+      paper-date-picker {
+        margin-top: 20px;
+        --default-primary-color: #653024;
+      }
+
+      #cal{
+        margin: 30px;
+      }
+    </style>
+
+    <app-indexeddb-mirror
+      key="/users/[[user.uid]]/[[year]]/[[month]]/[[day]]"
+      data="{{liveData}}"
+      session="[[user.uid]]"
+      persisted-data="{{data}}">
+    </app-indexeddb-mirror>
+
+    <firebase-document
+      app="3aday"
+      path="/users/[[user.uid]]/[[year]]/[[month]]/[[day]]"
+      data="{{liveData}}">
+    </firebase-document>
+
+    <app-toolbar>
+      <paper-icon-button icon="my-icons:keyboard-arrow-left" on-tap="_dayLess"></paper-icon-button>
+        <div main-title>[[day]]/[[month]]/[[year]]</div>
+        <paper-icon-button icon="my-icons:keyboard-arrow-right" on-tap="_dayMore"></paper-icon-button>
+    </app-toolbar>
+    <br>
+    <paper-icon-button icon="my-icons:date-range" on-tap="_collapseCalendar"></paper-icon-button>
+
+    <iron-collapse id="calendarCollapse">
+      <paper-date-picker force-narrow date="{{date}}"></paper-date-picker>
+    </iron-collapse>
+
+    <div class="container">
+      <paper-input id="first" value="{{data.first}}"></paper-input>
+      <paper-input id="second" value="{{data.second}}"></paper-input>
+      <paper-input id="third" value="{{data.third}}"></paper-input>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'my-three',
+
+      behaviors: [
+        Polymer.IronA11yKeysBehavior
+      ],
+
+      listeners: {
+        'track': '_onTrack'
+      },
+
+      observers: [
+        '_dateChanged(date)'
+      ],
+
+      keyBindings: {
+        'enter': '_enterPressed'
+      },
+
+      _enterPressed: function(e) {
+        var id= e.detail.keyboardEvent.path[7].id;
+        switch (id){
+          case 'first':
+            this.$.second.focus();
+          break;
+          case 'second':
+            this.$.third.focus();
+          break;
+          default:
+            this.$.first.focus();
+        }
+      },
+
+      _onTrack: function(event) {
+        var track = event.detail;
+        if (track.dx < -130){
+          this.debounce('swipe-left',this._dayMore, 60);
+        } else if (track.dx > 130){
+          this.debounce('swipe-right',this._dayLess, 60);
+        }
+      },
+
+      _dateChanged: function(date){
+        this.day = date.getDate();
+        this.month = date.getMonth() + 1;
+        this.year = date.getFullYear();
+      },
+
+      _collapseCalendar: function() {
+        this.$.calendarCollapse.toggle();
+      },
+
+      _dayLess: function(){
+        var newDate = new Date(this.date.getTime() - 24*60*60*1000);
+        this.date = newDate;
+      },
+      _dayMore: function(){
+       var newDate = new Date(this.date.getTime() + 24*60*60*1000);
+        this.date = newDate;
+      }
+    });
+  </script>
+</dom-module>

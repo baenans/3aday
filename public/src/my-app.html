@@ -1,0 +1,188 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="my-three.html">
+<link rel="import" href="my-login.html">
+<link rel="import" href="my-config.html">
+<link rel="import" href="my-icons.html">
+
+<dom-module id="my-app">
+  <template>
+    <style>
+      :host {
+        --app-primary-color: #653024;
+        --app-secondary-color: black;
+
+        display: block;
+      }
+
+      app-header {
+        color: #fff;
+        background-color: var(--app-primary-color);
+        text-align: center;
+      }
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      .drawer-list {
+        margin: 0 20px;
+      }
+
+      .drawer-list a {
+        display: block;
+        padding: 0 16px;
+        text-decoration: none;
+        color: var(--app-secondary-color);
+        line-height: 40px;
+      }
+
+      .drawer-list a.iron-selected {
+        color: black;
+        font-weight: bold;
+      }
+
+      app-drawer app-toolbar{
+        font-size: 18px;
+      }
+
+      app-drawer app-toolbar img{
+        width: 45px;
+        height: 45px;
+        margin: 5px;
+        margin-right: 10px;
+        border-radius: 50%;
+      }
+    </style>
+
+
+      <firebase-app
+        app-name="3aday"
+        auth-domain="aday-d493a.firebaseapp.com"
+        database-url="https://aday-d493a.firebaseio.com"
+        api-key="AIzaSyCxX4-wawOPR8RJpNahI9SAEnbqO_4OX38"
+        storage-bucket="aday-d493a.appspot.com"
+        messaging-sender-id="368646972747">
+      </firebase-app>
+
+      <firebase-auth 
+        id="auth"
+        app="3aday"
+        user="{{user}}"
+        signed-in="{{userSignedIn}}"
+        provider="google" 
+        on-error="handleError">
+      </firebase-auth>
+
+      <app-drawer-layout force-narrow fullbleed>
+        <app-drawer id="drawer">
+        <app-toolbar>
+          <img src="[[user.photoURL]]"> [[user.displayName]]
+        </app-toolbar>
+        <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
+          <a name="three">Home</a>
+          <a name="config">Configuration</a>
+        </iron-selector>
+        </app-drawer>
+
+        <app-header-layout has-scrolling-region>
+
+          <app-header condenses reveals effects="waterfall">
+            <app-toolbar>
+              <template is="dom-if" if="[[userSignedIn]]">
+                <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
+              </template>
+              <div main-title>3 a Day Gratitude!</div>
+              <template is="dom-if" if="[[userSignedIn]]">
+                <paper-icon-button icon="my-icons:exit-to-app" on-tap="_signOut"></paper-icon-button>
+              </template>
+            </app-toolbar>
+          </app-header>
+
+          <iron-pages
+              selected="[[page]]"
+              attr-for-selected="name"
+              fallback-selection="view404"
+              role="main">
+            <my-three name="three" user="{{user}}"></my-three>
+            <my-login name="login" on-launch-sign-in="_launchSignIn"></my-login>
+            <my-config name="config" user="{{user}}"></my-config>
+            <my-login name="about" on-launch-sign-in="_launchSignIn"></my-login>
+          </iron-pages>
+        </app-header-layout>
+      </app-drawer-layout>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'my-app',
+
+      properties: {
+        page: String
+      },
+
+      observers: [
+        '_loginStatus(userSignedIn)',
+        '_pageChanged(page)'
+      ],
+
+      _pageChanged: function(page){
+        if (!this.userSignedIn){
+          this.page = 'login';
+        } else {
+          this.page = page || 'three';
+        }
+        this.$.drawer.close();
+      },
+
+      _loginStatus: function(userSignedIn){
+        if (userSignedIn === undefined) {
+          return;
+        } else if (userSignedIn == false){
+          this.page = 'login';
+        } else {
+          this.page = 'three';
+        }
+      },
+
+      _launchSignIn: function() {
+        this.$.auth.signInWithPopup()
+          .then(function(response) {
+
+          })
+          .catch(function(error) {
+            // zome error happened!
+
+          });
+      },
+
+      _signOut: function() {
+        this.$.auth.signOut();
+      },
+
+
+
+    });
+  </script>
+</dom-module>
