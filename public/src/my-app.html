@@ -24,7 +24,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="my-three.html">
 <link rel="import" href="my-login.html">
-<link rel="import" href="my-config.html">
 <link rel="import" href="my-icons.html">
 
 <dom-module id="my-app">
@@ -95,43 +94,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         on-error="handleError">
       </firebase-auth>
 
-      <app-drawer-layout force-narrow fullbleed>
-        <app-drawer id="drawer">
-        <app-toolbar>
-          <img src="[[user.photoURL]]"> [[user.displayName]]
-        </app-toolbar>
-        <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="three">Home</a>
-          <a name="config">Configuration</a>
-        </iron-selector>
-        </app-drawer>
+      <app-header-layout fullbleed has-scrolling-region>
 
-        <app-header-layout has-scrolling-region>
+        <app-header condenses reveals effects="waterfall">
+          <app-toolbar>
+            <div main-title>3 a Day Gratitude!</div>
+            <template is="dom-if" if="[[userSignedIn]]">
+              <paper-icon-button icon="my-icons:exit-to-app" on-tap="_signOut"></paper-icon-button>
+            </template>
+          </app-toolbar>
+        </app-header>
 
-          <app-header condenses reveals effects="waterfall">
-            <app-toolbar>
-              <template is="dom-if" if="[[userSignedIn]]">
-                <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
-              </template>
-              <div main-title>3 a Day Gratitude!</div>
-              <template is="dom-if" if="[[userSignedIn]]">
-                <paper-icon-button icon="my-icons:exit-to-app" on-tap="_signOut"></paper-icon-button>
-              </template>
-            </app-toolbar>
-          </app-header>
+        <iron-pages
+            selected="[[page]]"
+            attr-for-selected="name"
+            fallback-selection="view404"
+            role="main">
+          <my-three name="three" user="{{user}}"></my-three>
+          <my-login name="login" on-launch-sign-in="_launchSignIn"></my-login>
+        </iron-pages>
+      </app-header-layout>
 
-          <iron-pages
-              selected="[[page]]"
-              attr-for-selected="name"
-              fallback-selection="view404"
-              role="main">
-            <my-three name="three" user="{{user}}"></my-three>
-            <my-login name="login" on-launch-sign-in="_launchSignIn"></my-login>
-            <my-config name="config" user="{{user}}"></my-config>
-            <my-login name="about" on-launch-sign-in="_launchSignIn"></my-login>
-          </iron-pages>
-        </app-header-layout>
-      </app-drawer-layout>
   </template>
 
   <script>
@@ -143,18 +126,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       observers: [
-        '_loginStatus(userSignedIn)',
-        '_pageChanged(page)'
+        '_loginStatus(userSignedIn)'
       ],
-
-      _pageChanged: function(page){
-        if (!this.userSignedIn){
-          this.page = 'login';
-        } else {
-          this.page = page || 'three';
-        }
-        this.$.drawer.close();
-      },
 
       _loginStatus: function(userSignedIn){
         if (userSignedIn === undefined) {
