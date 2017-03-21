@@ -1,0 +1,76 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-messaging.html">
+
+<dom-module id="my-config">
+  <template>
+    <style>
+      :host {
+        display: block;
+        padding: 10px;
+        text-align: center;
+        margin-top: 60px;
+      }
+    </style>
+
+    <firebase-document
+      app="3aday"
+      path="/users/[[user.uid]]/config"
+      data="{{config}}">
+    </firebase-document>
+
+    <firebase-messaging id="messaging"
+      token="{{token}}"
+      on-message="_handleMessage">
+    </firebase-messaging>
+
+    <paper-button on-tap="_getPushNotifications">Receive notifications</paper-button>
+    <!-- Config should go here :3-->
+    
+    
+    
+  </template>
+
+  <script>
+    Polymer({
+      is: 'my-config',
+
+
+      observers: [
+        '_tokenChanged(user.uid, token)'
+      ],
+
+      _tokenChanged: function(uid, token){
+
+        console.log(uid);
+        console.log(token);
+        
+        this.set('config.token', token);
+      },
+
+      _handleMessage: function(m){
+        console.log(m);
+      },
+
+      _getPushNotifications: function(){
+          this.$.messaging.requestPermission().then(function(e) {
+            console.log(e, this.token);
+          }, function(err) {
+          });
+ 
+      }
+
+    });
+  </script>
+</dom-module>
